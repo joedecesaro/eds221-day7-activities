@@ -1,0 +1,74 @@
+---
+title: "bird_joins"
+author: "Joe DeCesaro"
+date: "8/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(lubridate)
+```
+
+## Task 1: Joins on birds
+```{r}
+birds <- read_csv(here("data", "52_pp52_birds_1.csv"))
+sites <- read_csv(here("data", "52_pp52_sites_1.csv"))
+surveys <- read_csv(here("data", "52_pp52_surveys_1.csv"))
+taxalist <- read_csv(here("data", "52_pp52_taxalist_1.csv"))
+
+birds_subset <- birds %>% 
+  filter(species_id %in% c("BHCO", "RWBL"), 
+         site_id %in% c("LI-W", "NU-C"))
+  
+```
+
+Left join practice
+```{r}
+birds_left <- left_join(x = birds_subset, y = sites, by = "site_id") %>% 
+  left_join(y = taxalist, by = "species_id") %>% 
+  select(-point_location, -park_acreage, -park_district)
+
+```
+
+Full join practice
+```{r}
+birds_full <- full_join(x = birds_subset, y = sites, by = "site_id")
+```
+
+Inner join practice
+```{r}
+birds_inner <- inner_join(x = birds_subset, y = taxalist, by = "species_id")
+```
+
+## Task 2: Data wrangling and visualization with birds
+```{r}
+birds <- birds %>% 
+  rename(bird_obs_notes = notes)
+```
+
+
+```{r}
+birds_wrangle <- birds %>% 
+  full_join( y = taxalist, by = "species_id") %>% 
+  full_join(y = sites, by = "site_id") %>% 
+  full_join(y = surveys, by = "survey_id") %>% 
+  select(survey_date, common_name, park_name, bird_count) %>% 
+  mutate(survey_month = as.factor(month(survey_date))) %>% 
+  relocate(survey_month, .after = survey_date)
+
+birds_wrangle_tot <- birds_wrangle %>% 
+  drop_na(survey_month, park_name) %>% 
+  group_by(park_name, survey_month) %>% 
+  summarize(total = n()) %>% 
+  filter(park_name %in% c("Lindo", "Orme", "Palomino", "Sonrisa"))
+
+
+ggplot(data = birds_wrangle_tot, aes(x = survey_month, y = total)) +
+  geom_point(aes(color = park_name)) 
+
+
+```
+

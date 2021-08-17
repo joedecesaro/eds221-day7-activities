@@ -1,0 +1,44 @@
+---
+title: "string_practice"
+author: "Joe DeCesaro"
+date: "8/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(lubridate)
+library(stringr)
+```
+
+## Task 3: Practice with strings
+```{r}
+alarm_report <- data.frame(
+  stringsAsFactors = FALSE,
+              date = c("2020-03-14", "2020-03-15", "2020-04-10", "2020-04-18"),
+          building = c("Engineering-North",
+                       "Bren Hall","Engineering-South","Engr-North"),
+     alarm_message = c("10:02am – HVAC system down, facilities management alerted",
+                       "8:24am – Elevator North out of service",
+                       "12:41am – Fire alarm, UCSB fire responded and cleared",
+                       "9:58pm – Campus point emergency siren, UCPD responded")
+)
+```
+
+```{r}
+alarm_report_update <- alarm_report %>%
+  mutate(building = str_replace(building, 'Engr', 'Engineering')) %>%
+  separate(building,
+           into = c('building', 'wing'),
+           sep = '-') %>% 
+  filter(str_detect(alarm_message, "responded")) %>% 
+  separate(alarm_message,
+           into = c('time', 'message'),
+           sep = '–') %>% 
+  mutate(date = ymd(date))
+
+class(alarm_report_update$date)
+```
+
